@@ -1,4 +1,4 @@
-import javax.swing.SwingUtilities
+import javax.swing.SwingUtilities;
 
 public abstract class sniffer_CaptureThread {
     //Globals
@@ -56,5 +56,65 @@ public abstract class sniffer_CaptureThread {
     public Object get()
     {
         while(true)
+        {
+            Thread t = threadVar.get();
+
+            if(t == null)
+            {
+                return getValue();
+            }
+
+            try
+            {
+                t.join();
+            }
+
+            catch (InterruptedException e)
+            {
+                Thread.currentThread().interrupt();
+                return null;
+            }
+        }
+    }
+
+    public sniffer_CaptureThread()
+    {
+        final Runnable doFinished = new Runnable()
+        {
+            public void run()
+            {
+                finished();
+            }
+        };
+
+        Runnable doConstruct = new Runnable()
+        {
+            public void run()
+            {
+                try
+                {
+                    setValue(construct());
+                }
+                finally
+                {
+                   threadVar.clear();
+                }
+
+                SwingUtilities.invokeLater(doFinished);
+            }
+        };
+
+        Thread t = new Thread(doConstruct);
+        threadVar = new ThreadVar(t);
+    }
+
+    public void start()
+    {
+        Thread t = threadVar.get();
+
+        if(t != null)
+        {
+            t.start();
+        }
     }
 }
